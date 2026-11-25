@@ -139,8 +139,7 @@ function UI.new(send)
 		send(if self.isCop then "Segway" else "Horn")
 	end)
 	button(bottom, "MENU / M", UDim2.fromScale(0.24, 0.48), UDim2.fromScale(0.735, 0.08), function()
-		self.panel.Visible = not self.panel.Visible
-		self:rebuild()
+		self:toggle()
 	end)
 	self.hint = label(
 		bottom,
@@ -172,7 +171,7 @@ function UI.new(send)
 		colors.mint
 	)
 	button(panel, "×", UDim2.fromOffset(36, 34), UDim2.new(1, -46, 0, 8), function()
-		panel.Visible = false
+		self:closeGuide()
 	end)
 	for i, tab in { "Help", "Classes", "Wardrobe", "Receipt" } do
 		button(panel, tab, UDim2.new(0.235, 0, 0, 35), UDim2.new((i - 1) * 0.245 + 0.015, 0, 0, 50), function()
@@ -222,17 +221,63 @@ function UI:rebuild()
 	local snapshot = self.last or {}
 	local profile = snapshot.profile or { owned = {}, equipped = {}, passes = {}, prices = {}, bucks = 0 }
 	if self.tab == "Help" then
+		local cop = self.me and self.me.role == "Cop"
+		local gran = self.me and self.me.role == "Gran"
 		self:row(
-			"GRANS: Stash thrift goods in your bloomers. Bank at a Buick trunk, board a seat or hitch to the bumper, then start departure. Extract $500 as a team."
+			if cop
+				then "YOU ARE A MALL COP\nStop the Grans from escaping with $500 in goods before four minutes run out."
+				elseif
+					gran
+				then "YOU ARE A GRAN\nCollect goods, bank them at a car, then escape with $500 as a team before four minutes run out."
+				else "HOW TO PLAY\nGrans collect goods and escape with $500 as a team. Mall Cops try to stop them. Your role is assigned when the round starts.",
+			"Got it — play",
+			function()
+				self:closeGuide()
+			end
 		)
 		self:row(
-			"COPS: Tag a Gran twice within 8 seconds to detain. G mounts your Segway; R scans through racks. C cycles CCTV; X exits the tablet."
+			"MOVE & INTERACT\nWalk with WASD / left stick / touch joystick. Get close to an object and hold E / gamepad X / its touch prompt."
 		)
+		if not cop then
+			self:row(
+				"GRAN 1 — STASH\nEnter the store and hold the Stash prompt on goods. Watch BLOOMERS: it shows how much your bag can hold."
+			)
+			self:row(
+				"GRAN 2 — BANK\nReturn to a car's trunk and use Bank loot to empty your bag. Repeat trips to collect at least $500 in the getaway cars."
+			)
+			self:row(
+				"GRAN 3 — ESCAPE\nUse Board / choose driver or Hitch onto bumper. The chosen driver holds Start 7s departure. Stay aboard! Only goods in departed cars count toward $500."
+			)
+			self:row(
+				"CAUGHT?\nTwo cop tags detain you and return your unbanked loot to the store. A free teammate can hold Pick detention lock at the bench. Banked goods stay safe."
+			)
+			local class = (self.me and self.me.class) or (snapshot.choice and snapshot.choice.class) or "Manager"
+			self:row(
+				"YOUR CLASS: "
+					.. Catalog.Classes[class].name
+					.. "\n"
+					.. Catalog.Classes[class].description
+					.. (
+						if class == "Hoarder" then " This is passive." else " Press Q / gamepad Y / the Ability button."
+					)
+			)
+			self:row(
+				"OPTIONAL SODA BOOST\nSparkling Peach Fizz increases speed and bag space, but makes steering wobbly. You can win without drinking it."
+			)
+		end
+		if not gran then
+			self:row(
+				"COP 1 — CHASE & TAG\nFind a Gran and get close. Use Q / F / click / gamepad Y or R2 / Tag button. Tag the same Gran twice within eight seconds to detain them."
+			)
+			self:row(
+				"COP 2 — FIND HIDING GRANS\nR / L2 / Wand reveals Grans through racks. G / gamepad B / Segway mounts your patrol vehicle. Fizz puddles slow it down."
+			)
+			self:row(
+				"COP 3 — WATCH THE EXITS\nC / LB / CCTV cycles cameras. X / RB / Exit CCTV returns to your character. Guard the getaway cars and detention bench."
+			)
+		end
 		self:row(
-			"Fizz boosts speed and capacity but makes steering wobbly. A teammate can hold the detention prompt to rescue captured Grans. Unbanked loot is lost on capture."
-		)
-		self:row(
-			"Q = class ability / cop baton. F / click = baton. R = wand. G = Segway. B = leave Buick. M = menu. E / gamepad X / tap = nearby interactions."
+			"NEED A REMINDER?\nThe bottom hint tells you your next step. Open MENU / M / gamepad Select, then Help, to read these instructions again."
 		)
 		self:row("Select your preferred role for the next match.", "Prefer Gran", function()
 			self.send("Preference", "Gran")
@@ -390,6 +435,55 @@ function UI:exitCamera()
 	self.camera = 0
 	self.send("CCTV", 0)
 end
+function UI:closeGuide()
+	self.guideDismissed = true
+	self.panel.Visible = false
+end
+function UI:guidance(snapshot, p)
+	local goal = if p and p.role == "Cop"
+		then "COP GOAL: Stop $500 escaping\nTag Grans twice; guard getaway cars"
+		else "GRAN GOAL: Extract $500 as a team\nStash → bank at trunk → board → depart"
+	if snapshot.phase == "Payout" then
+		return "ROUND OVER • " .. (snapshot.result or "See your receipt"),
+			"Check your receipt. The next round starts shortly."
+	elseif snapshot.phase == "Intermission" then
+		return "GRANS loot & escape • COPS stop them",
+			if snapshot.practice
+				then "Solo practice starts shortly. MENU → Classes to choose your ability."
+				else "Rounds need 2+ players. MENU → Classes to choose your ability."
+	elseif not p or p.role == "Lobby" then
+		return "GRANS loot & escape • COPS stop them",
+			"Waiting for the next round. MENU → Help explains how to play."
+	elseif p.status == "Detained" then
+		return goal, "Detained: a teammate must hold Pick detention lock at the bench."
+	elseif p.status == "Escaped" then
+		return goal, "You escaped! Watch your team finish; your receipt is next."
+	elseif p.role == "Cop" then
+		return goal, "Get close; tag a Gran twice in 8s. Q / F / click / Y / R2 / Tag."
+	elseif p.car then
+		local car
+		for _, candidate in snapshot.cars do
+			if candidate.id == p.car then
+				car = candidate
+				break
+			end
+		end
+		if car and car.leavesAt then
+			return goal, "Stay aboard! Your getaway car is leaving."
+		elseif car and car.cargo == 0 then
+			return goal, "Car is empty. Leave the car and use Bank loot at its trunk first."
+		elseif car and (car.driver == p.id or (not car.driver and p.seat == "Seat")) then
+			return goal, "You drive: hold Start 7s departure. Only this car's cargo escapes."
+		elseif car and not car.driver then
+			return goal, "No driver: use Board / choose driver at a car door."
+		else
+			return goal, "Wait for your driver to start departure. B / Leave Car to get out."
+		end
+	elseif (p.bulk or 0) > 0 then
+		return goal, "Carry loot to a car trunk; use Bank loot. E / gamepad X / tap prompt."
+	end
+	return goal, "Find loot in the store; hold Stash. E / gamepad X / tap prompt."
+end
 function UI:render(snapshot)
 	local oldPhase = self.last and self.last.phase
 	self.last = snapshot
@@ -470,13 +564,15 @@ function UI:render(snapshot)
 	while #alerts > (if self.compact then 1 else 2) do
 		table.remove(alerts, 1)
 	end
-	self.alert.Text = table.concat(alerts, "\n")
+	local objective, hint = self:guidance(snapshot, p)
+	self.alert.Text = if #alerts > 0 then table.concat(alerts, "\n") else objective
+	self.hint.Text = hint
 	if oldPhase ~= snapshot.phase then
 		if snapshot.phase == "Payout" then
 			self.tab = "Receipt"
 			self.panel.Visible = true
 		elseif snapshot.phase == "Buick Intro" or snapshot.phase == "Heist" then
-			self.panel.Visible = false
+			self.panel.Visible = self.tab == "Help" and not self.guideDismissed
 		end
 		self:rebuild()
 	elseif self.panel.Visible and (self.tab == "Receipt" or self.tab == "Wardrobe" or self.tab == "Classes") then
@@ -489,7 +585,11 @@ function UI:render(snapshot)
 	end
 end
 function UI:toggle()
-	self.panel.Visible = not self.panel.Visible
+	if self.panel.Visible then
+		self:closeGuide()
+		return
+	end
+	self.panel.Visible = true
 	if self.panel.Visible then
 		self:rebuild()
 	end

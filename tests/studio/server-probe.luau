@@ -91,6 +91,11 @@ local ok, result = xpcall(function()
 	if args.suite == "mobile" then
 		return require(script.Parent.NativeMobileCases)(runtime, client, check, waitFor, errors)
 	end
+	for _, player in Players:GetPlayers() do
+		check(client(player, { kind = "Inspect" }).guideOpen, "first-join guide is visible for " .. player.Name)
+		client(player, { kind = "Button", text = "Got it" })
+		check(not client(player, { kind = "Inspect" }).guideOpen, "guide dismiss button works for " .. player.Name)
+	end
 	waitFor(function()
 		return runtime.phase == "Heist"
 	end, 45, "normal lobby and Buick intro")

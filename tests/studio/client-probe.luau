@@ -18,6 +18,7 @@ end)
 local function inspect()
 	local hud = player:WaitForChild("PlayerGui"):FindFirstChild("GranThriftHUD")
 	local labels = {}
+	local guideOpen = false
 	local boxes, clipped = {}, {}
 	local function box(object)
 		return {
@@ -42,6 +43,9 @@ local function inspect()
 					ancestor = ancestor.Parent
 				end
 				if visible then
+					if v.Text == "Got it — play" then
+						guideOpen = true
+					end
 					if not v.TextFits and v.Text ~= "" then
 						table.insert(clipped, v.Text)
 					end
@@ -71,6 +75,7 @@ local function inspect()
 	end
 	return {
 		hud = hud ~= nil,
+		guideOpen = guideOpen,
 		labels = labels,
 		highlights = highlights,
 		camera = workspace.CurrentCamera.CameraType.Name,

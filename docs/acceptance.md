@@ -1,18 +1,20 @@
 # PRD acceptance and verification
 
 Status: source reviewed and fixes verified; **native Roblox acceptance is pending**.
-This is a game implementation, not a published Roblox experience.
+A private cloud playtest copy was saved on 2026-11-25 under JheredParnell:
+universe `10779045356`, start place `71312709063689`. Public release is off.
+Tester invitation completion and production-service verification remain open.
 
 ## Automated evidence
 
-- 47 Lune tests execute production rules, match actions, profiles, map generation,
+- 49 Lune tests execute production rules, match actions, profiles, map generation,
   real Economy service logic, real UI construction/actions and camera cleanup.
   Service-boundary tests replace external Roblox services and events; they
   are not a substitute for native engine acceptance.
 - Every Luau source compiles through `@lune/luau`.
 - Rojo builds the DataModel. Lune bakes the map and deserializes the resulting
   binary place to confirm it contains map and server scripts.
-- Latest source run: 47/47 tests; 13 source files compile; Selene reports
+- Latest source run: 49/49 tests; 13 source files compile; Selene reports
   0 errors, 0 warnings and 0 parse errors; Rojo and binary map packaging pass.
   Source tests do not execute Roblox engine physics or live online services.
 
@@ -60,7 +62,8 @@ hash, is in `verification/native-smoke-2026-11-25.json`.
 
 Subsequent native suites now cover:
 
-- **Heist, four clients, 33 checks:** lobby/intro/240-second clock, loot and
+- **Heist, four clients, 41 checks:** first-join guide display/dismissal,
+  lobby/intro/240-second clock, loot and
   Fizz prompts, Manager stun, capture/rescue, Segway slip, wand, CCTV exit
   through an actual button click, vent traversal, banking over $500, seating
   and hitching, departure/stragglers, payout receipt and camera reset.
@@ -68,7 +71,8 @@ Subsequent native suites now cover:
   capacity and silent fragile loot, Fizz expiry with excess cargo, death and
   respawn detention, rescue, late joining, next-round selection/reset, Turbo
   movement/speed/ram/cooldown, carrying-player disconnect and timeout resolution.
-- **Phone landscape, 567×319 viewport, 16 checks:** safe-area bounds,
+- **Phone landscape, 567×319 viewport, 20 checks:** first-join guide persistence,
+  actual dismissal button, Gran/Cop instruction text fitting, safe-area bounds,
   nonoverlapping stash/actions/car status, text fitting in the HUD/help/classes,
   and accessible Cop CCTV exit. Portrait was requested in an earlier test but
   the experience retained landscape; portrait support is not claimed.
@@ -85,6 +89,13 @@ adapts its geometry and text sizes to smaller viewports. Modern TextChatService
 is explicitly configured, and bundled fallback audio paths reference installed
 Roblox content files. Native game-script error checks are green; platform
 messages, when present, are recorded separately in the JSON.
+
+Beginner guidance now uses numbered, role-specific instructions and the actual
+prompt labels from the map. The Help panel stays open until explicitly dismissed;
+role objectives and next-step hints remain on the HUD. Source regressions verify
+collection/banking, driver/hitcher instructions (including a missing driver),
+departure countdown, detention, late joins and guide dismissal. This addresses
+the first private playtest feedback that the game did not explain how to play.
 
 ## Execution decisions
 

@@ -152,6 +152,57 @@ local function snapshot(role)
 	}
 end
 return {
+	["First-join guide stays open until the player dismisses it"] = function()
+		local ui = harness()
+		ui:render(snapshot("Gran"))
+		assert(ui.panel.Visible, "Starting a round must not hide unread instructions")
+		local gotIt
+		for _, child in ui.content:GetDescendants() do
+			if child:IsA("TextButton") and child.Text == "Got it — play" then
+				gotIt = child
+			end
+		end
+		assert(gotIt, "Guide needs an obvious way to start playing")
+		gotIt.Activated:Fire()
+		assert(not ui.panel.Visible)
+		ui:render(snapshot("Cop"))
+		assert(not ui.panel.Visible, "Dismissed instructions should not interrupt gameplay")
+	end,
+	["Guidance follows the player's role and next gameplay action"] = function()
+		local ui = harness()
+		local state = snapshot("Gran")
+		ui:render(state)
+		assert(ui.alert.Text:find("$500", 1, true), "Explain the team victory objective")
+		assert(ui.hint.Text:find("trunk", 1, true), "Carrying loot should point to banking")
+		state.players[1].bulk = 0
+		state.players[1].carried = 0
+		ui:render(state)
+		assert(ui.hint.Text:find("loot", 1, true), "Empty bag should point to collecting loot")
+		state.players[1].car = 1
+		state.cars = { { id = 1, cargo = 150, driver = 7 } }
+		ui:render(state)
+		assert(ui.hint.Text:find("Start 7s departure", 1, true), "Driver needs the actual departure prompt name")
+		state.cars[1].driver = nil
+		state.players[1].seat = "Seat"
+		ui:render(state)
+		assert(ui.hint.Text:find("Start 7s departure", 1, true), "A seated rider can take over an empty driver slot")
+		state.players[1].seat = "Hitch"
+		ui:render(state)
+		assert(ui.hint.Text:find("Board / choose driver", 1, true), "Hitchers must know when there is no driver")
+		state.cars[1].leavesAt = state.now + 5
+		ui:render(state)
+		assert(ui.hint.Text:find("Stay aboard", 1, true))
+		state.players[1].status = "Detained"
+		ui:render(state)
+		assert(ui.hint.Text:find("teammate", 1, true), "Explain how detention ends")
+		ui:render(snapshot("Cop"))
+		assert(ui.alert.Text:find("Stop", 1, true))
+		assert(ui.hint.Text:find("twice", 1, true), "Explain the cop's two-tag rule")
+		state = snapshot("Gran")
+		state.players = {}
+		ui:render(state)
+		assert(ui.hint.Text:find("next round", 1, true), "Late joins need a waiting explanation")
+	end,
 	["Gran touch controls can unboard and use the Buick horn"] = function()
 		local ui, sent = harness()
 		ui:render(snapshot("Gran"))

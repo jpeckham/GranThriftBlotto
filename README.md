@@ -50,6 +50,13 @@ evidence under `docs/verification/`. Test fixtures are never packaged in the gam
 
 ## Controls
 
+New players see a numbered field guide that stays open until they press
+**Got it — play**, close it, or toggle the menu. It explains the assigned role,
+the $500 extraction goal, nearby interaction prompts, banking, escape and
+detention. During play, the HUD shows the role objective and a next-step hint
+for collecting, banking, riding, driving, detention or waiting for a round.
+Open **MENU → Help** to read the guide again.
+
 | Action | Keyboard | Other devices |
 |---|---|---|
 | Stash, drink, bank, board, depart, rescue | E near a prompt | Gamepad X / touch prompt |
