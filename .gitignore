@@ -1,0 +1,5 @@
+.tools/
+.superpowers/
+build/
+*.rbxl.lock
+*.rbxlx.lock

@@ -1,6 +1,6 @@
 # Gran Thrift Blotto — implementation design
 
-Status: proposed for user approval. Source of requirements:
+Status: approved by James on 2026-11-25. Source of requirements:
 `gran_thrift_blotto_roblox_prd.md`. This covers the full PRD.
 
 ## Intent and approach
