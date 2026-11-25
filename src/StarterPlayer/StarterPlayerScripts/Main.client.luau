@@ -13,6 +13,7 @@ end
 local ui = UI.new(send)
 effects = Effects.new()
 remotes:WaitForChild("snapshot").OnClientEvent:Connect(function(snapshot)
+	ui:resize(workspace.CurrentCamera.ViewportSize)
 	ui:render(snapshot)
 	effects:update(snapshot)
 end)

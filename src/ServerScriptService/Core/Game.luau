@@ -169,7 +169,20 @@ function Game:ability(player, now)
 		end
 	elseif p.class == "Turbo" then
 		local direction = r.CFrame.LookVector
-		r.AssemblyLinearVelocity = direction * 62 + Vector3.new(0, 5, 0)
+		-- A replicated actuator keeps the dash active on the character's physics
+		-- owner; a one-off server velocity assignment can be overwritten by it.
+		local attachment = Instance.new("Attachment")
+		attachment.Name = "TurboDashAttachment"
+		attachment.Parent = r
+		local velocity = Instance.new("LinearVelocity")
+		velocity.Name = "TurboDashVelocity"
+		velocity.Attachment0 = attachment
+		velocity.RelativeTo = Enum.ActuatorRelativeTo.World
+		velocity.VectorVelocity = direction * 62 + Vector3.new(0, r.AssemblyLinearVelocity.Y, 0)
+		velocity.MaxForce = r.AssemblyMass * 2000
+		velocity.Parent = r
+		Debris:AddItem(velocity, 0.35)
+		Debris:AddItem(attachment, 0.4)
 		p.dashUntil = now + 0.5
 		task.spawn(function()
 			for _ = 1, 5 do

@@ -1,0 +1,41 @@
+{
+  "date": "2026-11-25",
+  "suite": "mobile-landscape",
+  "clients": 1,
+  "runId": "2b1fa0dc6f4145218a73a85284a34bbf",
+  "studioVersion": "0, 748, 0, 7481526",
+  "placeSha256": "344EBA38032E78851982F82323AA9406C4B601EB70D783425895970CDB58DB14",
+  "result": {
+    "viewport": [
+      567,
+      319
+    ],
+    "errors": [],
+    "platformErrors": [],
+    "suite": "mobile",
+    "passed": true,
+    "checks": [
+      "native multiplayer clients joined",
+      "native phone simulation uses 320-pixel short edge: [567,319]",
+      "phone stash panel and Buick status do not overlap {\"stats\":{\"y\":50,\"x\":11.339996337890625,\"w\":266.489990234375,\"h\":106},\"actions\":{\"y\":181,\"x\":11.339996337890625,\"w\":544.3200073242188,\"h\":72},\"cars\":{\"y\":84,\"x\":289.16998291015627,\"w\":266.489990234375,\"h\":44}}",
+      "phone action buttons do not overlap the stash panel",
+      "phone stats stays inside safe UI area",
+      "phone actions stays inside safe UI area",
+      "phone cars stays inside safe UI area",
+      "phone HUD text fits: ",
+      "phone help menu text fits: ",
+      "phone class descriptions fit: ",
+      "phone cop CCTV exit remains accessible",
+      "phone cop HUD text fits: ",
+      "phone cameraNext does not overlap other HUD controls",
+      "phone cameraExit does not overlap other HUD controls",
+      "phone CCTV buttons do not overlap each other",
+      "no game-script errors in phone UI scenario"
+    ]
+  },
+  "runnerSucceeded": true,
+  "limitations": [
+    "participants are positioned by test fixtures",
+    "live Marketplace and production DataStore are not exercised"
+  ]
+}

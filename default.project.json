@@ -7,6 +7,7 @@
     "StarterPlayer": { "StarterPlayerScripts": { "$path": "src/StarterPlayer/StarterPlayerScripts" } },
     "Workspace": { "$properties": { "Gravity": 196.2, "FallenPartsDestroyHeight": -100 } },
     "Lighting": { "$properties": { "ClockTime": 15, "Brightness": 2, "Ambient": [0.45, 0.45, 0.5] } },
-    "SoundService": { "$properties": { "RespectFilteringEnabled": true } }
+    "SoundService": { "$properties": { "RespectFilteringEnabled": true } },
+    "TextChatService": { "$properties": { "ChatVersion": "TextChatService", "CreateDefaultCommands": true, "CreateDefaultTextChannels": true } }
   }
 }

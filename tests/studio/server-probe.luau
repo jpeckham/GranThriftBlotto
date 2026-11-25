@@ -6,9 +6,14 @@ local bus = Replicated:WaitForChild("NativeTestBus")
 local args = StudioTest:GetTestArgs() or { clients = 4 }
 local replies, ready, checks = {}, {}, {}
 local errors = {}
+local platformErrors = {}
 local conn = game:GetService("LogService").MessageOut:Connect(function(message, kind)
 	if kind == Enum.MessageType.MessageError then
-		table.insert(errors, message)
+		if message:find("[Roblox]", 1, true) then
+			table.insert(platformErrors, message)
+		else
+			table.insert(errors, message)
+		end
 	end
 end)
 bus.OnServerEvent:Connect(function(player, data)
@@ -65,6 +70,9 @@ local ok, result = xpcall(function()
 		old:Destroy()
 	end
 	runtime = Game.start(Map.build(workspace), Economy.new())
+	if args.suite == "classes" then
+		runtime.deadline = workspace:GetServerTimeNow() + 120
+	end
 	waitFor(function()
 		return #Players:GetPlayers() >= args.clients
 	end, 60, "multiplayer clients")
@@ -77,6 +85,12 @@ local ok, result = xpcall(function()
 		return true
 	end, 45, "all characters and client HUDs")
 	check(#Players:GetPlayers() == args.clients, "native multiplayer clients joined")
+	if args.suite == "classes" then
+		return require(script.Parent.NativeClassCases)(runtime, client, move, check, waitFor, ready, args, errors)
+	end
+	if args.suite == "mobile" then
+		return require(script.Parent.NativeMobileCases)(runtime, client, check, waitFor, errors)
+	end
 	waitFor(function()
 		return runtime.phase == "Heist"
 	end, 45, "normal lobby and Buick intro")
@@ -111,7 +125,13 @@ local ok, result = xpcall(function()
 	client(gran, { kind = "Prompt", prompt = runtime.world.prompts.Cooler })
 	check(
 		runtime:state(gran).fizz > 90 and gran.Character.Humanoid.WalkSpeed > 16,
-		"Fizz changes native capacity and movement"
+		"Fizz changes native capacity and movement (fizz="
+			.. runtime:state(gran).fizz
+			.. ", speed="
+			.. gran.Character.Humanoid.WalkSpeed
+			.. ", position="
+			.. tostring(gran.Character.HumanoidRootPart.Position)
+			.. ")"
 	)
 	move(gran, CFrame.lookAt(Vector3.new(0, 3, -15), Vector3.new(0, 3, -20)))
 	move(cop, CFrame.new(0, 3, -20))
@@ -152,8 +172,13 @@ local ok, result = xpcall(function()
 	client(cop, { kind = "Action", action = "CCTV", id = 1 })
 	check(client(cop, { kind = "Inspect" }).camera == "Scriptable", "CCTV activates native camera")
 	client(cop, { kind = "Button", text = "EXIT CCTV" })
-	check(client(cop, { kind = "Inspect" }).camera == "Custom", "visible CCTV exit restores character camera")
-	move(gran, CFrame.new(-67, 3, -89))
+	local cameraReport = client(cop, { kind = "Inspect" })
+	check(
+		cameraReport.camera == "Custom",
+		"visible CCTV exit restores character camera " .. Http:JSONEncode(cameraReport.lastInput)
+	)
+	-- Approach from inside the last fitting room, not across its solid divider.
+	move(gran, CFrame.new(-67, 3, -99))
 	client(gran, { kind = "Prompt", prompt = runtime.world.prompts.Shortcut })
 	check(gran.Character.HumanoidRootPart.Position.X < -75, "donation vent bypasses scanners onto exterior walkway")
 	-- Accumulate real prompted pickups in several trunk trips until the win threshold is met.
@@ -217,7 +242,13 @@ local ok, result = xpcall(function()
 	)
 	for _, player in Players:GetPlayers() do
 		local report = client(player, { kind = "Inspect" })
-		check(#report.errors == 0, "no client script errors for " .. player.Name)
+		for _, message in report.platformErrors do
+			table.insert(platformErrors, message)
+		end
+		check(
+			#report.errors == 0,
+			"no client script errors for " .. player.Name .. ": " .. table.concat(report.errors, " | ")
+		)
 	end
 	check(#errors == 0, "no server script errors during native scenario")
 	return {
@@ -231,6 +262,14 @@ local ok, result = xpcall(function()
 	}
 end, debug.traceback)
 conn:Disconnect()
+if ok and type(result) == "table" then
+	result.checks = checks
+	result.errors = errors
+	for _, message in result.platformErrors or {} do
+		table.insert(platformErrors, message)
+	end
+	result.platformErrors = platformErrors
+end
 if not ok then
 	result = { passed = false, error = result, checks = checks, errors = errors, phase = runtime and runtime.phase }
 end

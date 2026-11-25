@@ -79,7 +79,9 @@ function UI.new(send)
 		BackgroundTransparency = 0.05,
 		BorderSizePixel = 0,
 	}))
-	label(top, "GRAN THRIFT\nBLOTTO", UDim2.fromScale(0.29, 0.9), UDim2.fromScale(0.025, 0.05), 18, colors.mint)
+	self.top = top
+	self.title =
+		label(top, "GRAN THRIFT\nBLOTTO", UDim2.fromScale(0.29, 0.9), UDim2.fromScale(0.025, 0.05), 18, colors.mint)
 	self.timer = label(top, "LOADING…", UDim2.fromScale(0.36, 0.88), UDim2.fromScale(0.32, 0.06), 21)
 	self.team =
 		label(top, "$0 / $500\nEXTRACTED", UDim2.fromScale(0.26, 0.9), UDim2.fromScale(0.72, 0.05), 17, colors.pink)
@@ -90,7 +92,9 @@ function UI.new(send)
 		BackgroundTransparency = 0.08,
 		BorderSizePixel = 0,
 	}))
-	new("UISizeConstraint", stats, { MaxSize = Vector2.new(330, 154), MinSize = Vector2.new(160, 154) })
+	self.stats = stats
+	self.statsConstraint =
+		new("UISizeConstraint", stats, { MaxSize = Vector2.new(330, 154), MinSize = Vector2.new(160, 154) })
 	self.role = label(stats, "WELCOME, GRAN", UDim2.new(1, -24, 0, 32), UDim2.fromOffset(12, 4), 16, colors.mint)
 	self.capacity = bar(stats, 40, "BLOOMERS", colors.pink)
 	self.fizz = bar(stats, 86, "FIZZ", colors.mint)
@@ -124,6 +128,7 @@ function UI.new(send)
 		BorderSizePixel = 0,
 		BackgroundTransparency = 0.05,
 	}))
+	self.bottom = bottom
 	self.primary = button(bottom, "Q / ABILITY", UDim2.fromScale(0.24, 0.48), UDim2.fromScale(0.015, 0.08), function()
 		send(if self.isCop then "Tag" else "Ability")
 	end)
@@ -158,7 +163,14 @@ function UI.new(send)
 		ZIndex = 3,
 	}))
 	self.panel = panel
-	label(panel, "THRIFTY ACRES • FIELD GUIDE", UDim2.new(0.84, 0, 0, 38), UDim2.fromOffset(16, 6), 18, colors.mint)
+	self.menuTitle = label(
+		panel,
+		"THRIFTY ACRES • FIELD GUIDE",
+		UDim2.new(0.84, 0, 0, 38),
+		UDim2.fromOffset(16, 6),
+		18,
+		colors.mint
+	)
 	button(panel, "×", UDim2.fromOffset(36, 34), UDim2.new(1, -46, 0, 8), function()
 		panel.Visible = false
 	end)
@@ -184,13 +196,19 @@ function UI.new(send)
 	return self
 end
 function UI:row(text, action, callback)
-	local frame = new(
-		"Frame",
-		self.content,
-		{ Size = UDim2.new(1, -8, 0, 76), BackgroundColor3 = Color3.fromRGB(43, 62, 62), BorderSizePixel = 0 }
-	)
+	local frame = new("Frame", self.content, {
+		Size = UDim2.new(1, -8, 0, if self.compact then 120 else 76),
+		BackgroundColor3 = Color3.fromRGB(43, 62, 62),
+		BorderSizePixel = 0,
+	})
 	round(frame)
-	label(frame, text, UDim2.new(if action then 0.71 else 0.96, -16, 1, -12), UDim2.fromOffset(10, 6), 14)
+	label(
+		frame,
+		text,
+		UDim2.new(if action then 0.71 else 0.96, -16, 1, -12),
+		UDim2.fromOffset(10, 6),
+		if self.compact then 12 else 14
+	)
 	if action then
 		return button(frame, action, UDim2.fromScale(0.26, 0.78), UDim2.fromScale(0.73, 0.11), callback)
 	end
@@ -284,6 +302,75 @@ function UI:rebuild()
 		end
 	end
 end
+function UI:resize(viewport)
+	local compact = viewport.X < 600 or viewport.Y < 500
+	local short = viewport.Y < 500
+	local mode = if short then "short" elseif compact then "narrow" else "full"
+	if self.layoutMode == mode then
+		return
+	end
+	self.layoutMode = mode
+	self.compact = compact
+	local y = if short then 50 elseif compact then 76 else 88
+	local height = if short then 106 elseif compact then 138 else 154
+	self.top.Size = UDim2.new(0.96, 0, 0, if short then 42 elseif compact then 62 else 74)
+	self.title.TextSize = if compact then 13 else 18
+	self.timer.TextSize = if compact then 14 else 21
+	self.team.TextSize = if compact then 12 else 17
+	self.statsConstraint.MinSize = Vector2.new(if compact then 0 else 160, height)
+	self.statsConstraint.MaxSize = Vector2.new(330, height)
+	self.stats.Size = UDim2.new(if compact then 0.47 else 0.38, 0, 0, height)
+	self.stats.Position = UDim2.new(0.02, 0, 0, y)
+	self.role.Size = UDim2.new(1, -24, 0, if compact then 20 else 32)
+	self.role.TextSize = if compact then 11 else 16
+	for i, meter in { self.capacity, self.fizz } do
+		local meterY = if short then 24 + (i - 1) * 28 elseif compact then 30 + (i - 1) * 35 else 40 + (i - 1) * 46
+		meter.text.Position = UDim2.fromOffset(12, meterY)
+		meter.text.Size = UDim2.new(1, -24, 0, if compact then 16 else 21)
+		meter.text.TextSize = if compact then 11 else 13
+		meter.fill.Parent.Position = UDim2.fromOffset(12, meterY + (if compact then 18 else 25))
+		meter.fill.Parent.Size = UDim2.new(1, -24, 0, if compact then 6 else 10)
+	end
+	self.bank.Position = UDim2.fromOffset(12, if short then 82 elseif compact then 103 else 130)
+	self.bank.Size = UDim2.new(1, -24, 0, if short then 24 elseif compact then 28 else 20)
+	self.bank.TextSize = if compact then 10 else 12
+	self.alert.Position = if compact then UDim2.new(0.51, 0, 0, y) else UDim2.fromScale(0.43, 0.14)
+	self.alert.Size = if compact then UDim2.new(0.47, 0, 0, if short then 30 else 60) else UDim2.fromScale(0.55, 0.12)
+	self.alert.TextSize = if compact then 10 else 16
+	self.cars.Position = if compact
+		then UDim2.new(0.51, 0, 0, y + (if short then 34 else 64))
+		else UDim2.fromScale(0.43, 0.26)
+	self.cars.Size = if compact then UDim2.new(0.47, 0, 0, if short then 44 else 72) else UDim2.fromScale(0.55, 0.14)
+	self.cars.TextSize = if compact then 10 else 14
+	self.bottom.Size = UDim2.new(0.96, 0, 0, if compact then 72 else 96)
+	self.bottom.Position = UDim2.new(0.02, 0, 1, if compact then -80 else -104)
+	for _, child in self.bottom:GetChildren() do
+		if child:IsA("TextButton") then
+			child.TextSize = if compact then 11 else 14
+		end
+	end
+	self.hint.TextSize = if compact then 9 else 12
+	self.hint.Size = UDim2.new(1, -24, 0, if compact then 20 else 26)
+	self.menuTitle.TextSize = if compact then 13 else 18
+	for _, child in self.panel:GetChildren() do
+		if child:IsA("TextButton") then
+			child.TextSize = if compact then 11 else 14
+		end
+	end
+	for i, b in { self.cameraNext, self.cameraExit } do
+		b.Position = UDim2.new(
+			if compact then 0.51 + (i - 1) * 0.245 else 0.43 + (i - 1) * 0.28,
+			0,
+			1,
+			if compact then -122 else -222
+		)
+		b.Size = UDim2.new(if compact then 0.225 else (if i == 1 then 0.25 else 0.27), 0, 0, 38)
+		b.TextSize = if compact then 10 else 14
+	end
+	self.toast.Position = UDim2.new(0.1, 0, 1, if compact then -178 else -168)
+	self.toast.TextSize = if compact then 12 else 16
+	self:rebuild()
+end
 function UI:notify(text)
 	self.toast.Text = text
 	self.toast.Visible = true
@@ -336,6 +423,14 @@ function UI:render(snapshot)
 		.. (if p then p.banked else 0)
 		.. " • Wallet $"
 		.. snapshot.profile.bucks
+	if self.compact then
+		self.bank.Text = "Carried $"
+			.. (if p then p.carried or 0 else 0)
+			.. " • Bank $"
+			.. (if p then p.banked else 0)
+			.. "\nWallet $"
+			.. snapshot.profile.bucks
+	end
 	local cd = if p then math.max(0, math.ceil(p.abilityAt - snapshot.now)) else 0
 	self.primary.Text = if self.isCop
 		then "Q / TAG GRAN"
@@ -371,6 +466,9 @@ function UI:render(snapshot)
 		if snapshot.now - alert.at < 6 then
 			table.insert(alerts, alert.text)
 		end
+	end
+	while #alerts > (if self.compact then 1 else 2) do
+		table.remove(alerts, 1)
 	end
 	self.alert.Text = table.concat(alerts, "\n")
 	if oldPhase ~= snapshot.phase then

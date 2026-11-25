@@ -58,8 +58,33 @@ visible Studio window; HUD, intro and Heist were visually observed without
 game-script errors. Machine-readable evidence, including the tested place
 hash, is in `verification/native-smoke-2026-11-25.json`.
 
-This proves startup only. The multiplayer interaction scenario and the rest
-of the native acceptance procedure remain in progress.
+Subsequent native suites now cover:
+
+- **Heist, four clients, 33 checks:** lobby/intro/240-second clock, loot and
+  Fizz prompts, Manager stun, capture/rescue, Segway slip, wand, CCTV exit
+  through an actual button click, vent traversal, banking over $500, seating
+  and hitching, departure/stragglers, payout receipt and camera reset.
+- **Classes/lifecycle, six growing to eight clients, 38 checks:** Hoarder
+  capacity and silent fragile loot, Fizz expiry with excess cargo, death and
+  respawn detention, rescue, late joining, next-round selection/reset, Turbo
+  movement/speed/ram/cooldown, carrying-player disconnect and timeout resolution.
+- **Phone landscape, 567×319 viewport, 16 checks:** safe-area bounds,
+  nonoverlapping stash/actions/car status, text fitting in the HUD/help/classes,
+  and accessible Cop CCTV exit. Portrait was requested in an earlier test but
+  the experience retained landscape; portrait support is not claimed.
+
+Saved results and artifact hashes are in `verification/native-{heist,classes,
+mobile-landscape}-2026-11-25.json`. These are native scripted scenarios: fixtures
+position players, accelerate selected timers and inspect state. They do not
+replace human assessment of controls, character appearance or camera comfort.
+
+The tests exposed and verified fixes for a server-only dash velocity being
+overwritten by native character physics and for the phone HUD overlapping its
+action bar. Turbo now uses a short-lived replicated velocity actuator; the HUD
+adapts its geometry and text sizes to smaller viewports. Modern TextChatService
+is explicitly configured, and bundled fallback audio paths reference installed
+Roblox content files. Native game-script error checks are green; platform
+messages, when present, are recorded separately in the JSON.
 
 ## Execution decisions
 
@@ -81,22 +106,22 @@ of the native acceptance procedure remain in progress.
 
 | PRD requirement | Implementation | Native check still required |
 |---|---|---|
-| 10 players, two cops/eight Grans, four-minute round | Config, Rules.roles, Match, Game | Full ten-client round and timer |
-| Lobby → Buick intro → heist → extraction → payout | Game phases, Match.tick | Full cycle and reset |
+| 10 players, two cops/eight Grans, four-minute round | Config, Rules.roles, Match, Game; native 4/8 clients and 240-second clock | Published ten-player round (Studio limit is eight) |
+| Lobby → Buick intro → heist → extraction → payout | Game phases, Match.tick; native full cycle and reset | Human pacing assessment |
 | Dense one-store/four-zone map | Map.build | Walk all aisles, doors and shortcuts |
 | Shoes, inserts, figurines, paintings, haunted phones | Catalog.Loot, generated props | Prompt usability and loot visuals |
 | Expanding bloomers worn outside floral dresses | Characters.apply | R6/R15 appearance and collisions |
 | Fizz speed/capacity/wobble/hiccup | Rules, Match.drink, Game sound, Effects | Steering/visual/audio comfort and reset |
 | Manager cone/3-second stun/scanner shutdown | Match.ability, Game.ability | Cone/occlusion, timing, complaint cue |
-| Hoarder 40% capacity, silent fragile pickup | Rules.capacity, Game loot handler | No crash alert from Hoarder |
-| Turbo Walker 20% asphalt boost/dash ram | Rules.speed, Characters, Game.ability | Walker appearance, dash and dismount |
+| Hoarder 40% capacity, silent fragile pickup | Rules.capacity, Game loot handler; native capacity/silence pass | Human feedback assessment |
+| Turbo Walker 20% asphalt boost/dash ram | Rules.speed, Characters, Game.ability; native movement/ram/dismount pass | Walker appearance and dash feel |
 | Segway fast tile/reduced carpet and puddle traction | Characters, Game update | Actual physics/movement feel |
 | Two tags, detention, loot confiscation/return | Match.tag/capture, Game | Wall blocking, hit timings, reset/death |
-| Held detention rescue | Map rescue prompt, Match.rescue, Game | Hold duration and valid proximity |
+| Held detention rescue | Map rescue prompt, Match.rescue, Game; native held prompt pass | Human touch/gamepad usability |
 | Security wand through racks, alarms and CCTV | Game actions/scanners, Effects | Visibility, all cameras and camera exit |
 | Buick deposit/driver/departure/stragglers/hitch | Match, Map car prompts, Game animation | Rider seats, bumper and warning timing |
 | Buick intro with bottle props | Game.beginRound | Camera, car movement and bottles |
-| HUD capacity/Fizz/escape/alerts | UI | Desktop, narrow phone, gamepad |
+| HUD capacity/Fizz/escape/alerts | UI; native HUD/menu checks at 567×319 | Human phone/gamepad interaction and rotation |
 | Receipt/payout/soft currency wardrobe | UI, Profile, Economy | Itemization, wallet updates and equip |
 | Golden Buick, VIP, tactical Segway, role priority | Catalog, Config pass IDs, Game/Characters | Real pass ownership, visuals and pricing |
 | Developer-product hook | Economy.ProcessReceipt, Profile.receipt | Real durable receipt retry/idempotence |

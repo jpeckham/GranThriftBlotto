@@ -20,7 +20,8 @@ the tools are already available in ignored `.tools/`.
 
 Open **`build/GranThriftBlotto.rbxl`** in Roblox Studio. This packaged place
 includes the editor-visible map and all scripts. Press Play for solo practice;
-use Studio's Server & Clients test with 2–10 players for multiplayer.
+use Studio's Server & Clients test for local multiplayer (Studio supports
+up to eight test clients; ten-player capacity needs a published server).
 The map resets from source at game startup, so make map changes in
 `src/ServerScriptService/Core/Map.luau` rather than the generated place.
 
@@ -28,11 +29,24 @@ For live source sync, run `rojo serve` (or `.tools/rojo.exe serve`) and connect
 the Rojo Studio plugin. The `.rbxlx` build also contains the source scripts;
 the map in that file is generated when Play begins.
 
-Studio is installed on the build workstation. Native solo startup now passes:
-the client HUD and costume initialize and the round reaches Heist. Multiplayer
-interaction and wider UI verification remain in progress. See
-[docs/acceptance.md](docs/acceptance.md) for the evidence and exact checks still
-needed. Do not treat a green rules suite as a complete live playtest.
+Native Studio suites pass solo startup, a four-client heist, a six-to-eight-client
+class/lifecycle scenario, and a 567×319 phone HUD check. The tests exercise real
+scripts, prompts, keyboard input, UI clicks and physics, with fixtures positioning
+participants and accelerating selected waits. See [docs/acceptance.md](docs/acceptance.md)
+for evidence and remaining manual/live-service checks.
+
+To reproduce on a signed-in Windows Studio installation:
+
+```powershell
+./scripts/run-studio-test.ps1 -Suite heist -Clients 4
+# After Studio exits:
+./scripts/collect-studio-test.ps1 -Session build/native-heist-session.json
+# Also available: -Suite classes -Clients 6; -Suite mobile -Orientation landscape
+```
+
+Run one suite at a time. Each launch saves its process metadata, place hash,
+isolated place and runner under `build/`; the collector saves reviewable JSON
+evidence under `docs/verification/`. Test fixtures are never packaged in the game.
 
 ## Controls
 
