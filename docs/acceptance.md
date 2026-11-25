@@ -3,7 +3,9 @@
 Status: source reviewed and fixes verified; **native Roblox acceptance is pending**.
 A private cloud playtest copy was saved on 2026-11-25 under JheredParnell:
 universe `10779045356`, start place `71312709063689`. Public release is off.
-Tester invitation completion and production-service verification remain open.
+James reports the intended tester's friend connection and invitation are complete.
+Production-service verification remains open. Reboot context and cloud-save details
+are recorded in `handoff/reboot-2026-11-25.md`.
 
 ## Automated evidence
 
