@@ -1,16 +1,58 @@
 # PRD acceptance and verification
 
-Status: implemented source under review; **native Roblox acceptance is pending**.
+Status: source reviewed and fixes verified; **native Roblox acceptance is pending**.
 This is a game implementation, not a published Roblox experience.
 
 ## Automated evidence
 
-- 27 Lune tests execute production rules, match actions, profiles and map generation.
+- 46 Lune tests execute production rules, match actions, profiles, map generation,
+  real Economy service logic, real UI construction/actions and camera cleanup.
+  Service-boundary tests replace external Roblox services and events; they
+  are not a substitute for native engine acceptance.
 - Every Luau source compiles through `@lune/luau`.
 - Rojo builds the DataModel. Lune bakes the map and deserializes the resulting
   binary place to confirm it contains map and server scripts.
-- Selene static analysis and independent code review are recorded below after
-  their final runs. Source tests do not execute Roblox engine physics or services.
+- Final source run: 46/46 tests; 13 source files compile; Selene reports
+  0 errors, 0 warnings and 0 parse errors; Rojo and binary map packaging pass.
+  Source tests do not execute Roblox engine physics or live online services.
+
+## Independent review and fix evidence
+
+The reviewer inspected the full source branch at `9c917f0` and reported no
+Critical findings, four Important findings, and three smaller gaps. All were
+addressed in the same fix pass; fixes are verified by regression tests rather
+than an additional reviewer pass.
+
+| Finding | Fix and regression |
+|---|---|
+| UpdateAsync callback retry can lose lease but acknowledge an unpersisted receipt | Reset ownership flag on every transform; require persisted return value. Multi-callback lease-takeover test failed before fix and now passes. |
+| Failed profile load cannot recover on same-server rejoin | Remove failed/unwritable sessions on departure without saving them. Same-server rejoin test failed before fix and now passes. |
+| Touch/gamepad CCTV lacks exit/cycle controls | Visible HUD controls, LB/RB bindings and local camera release. Actual production UI callback test failed before fix and now passes. |
+| Donation shortcut does not bypass scanners; unsupported exterior | Connect fitting-room vent to supported exterior side walkway. Map traversal endpoint/support test failed before fix and now passes. |
+| Monitor wall lacks live aisle alerts | Motion sensing and timed alert/clear labels. Map monitor-state test failed before fix and now passes. |
+| Stash/Fizz visuals persist on escape/payout | Clear unbanked bags/Fizz at those transitions, retain deposit receipt. Both match regression tests failed before fix and now pass. |
+| HUD omits carried value and wand cooldown | Add both fields/displays. Actual UI render test failed before fix and now passes. |
+
+Additional checks protect car color/scanner reset, animated escape-rider
+retention, touch horn/unboarding and camera cleanup after detention,
+character replacement and round transition. Departure prompts remain usable
+inside car geometry while the server checks range and chosen driver.
+
+## Execution decisions
+
+- Used native inline execution on `codex/full-game` in the requested checkout,
+  leaving `main` unchanged. This avoids moving the workspace again; changes
+  are visible to any other editor sharing this checkout.
+- Built persistence before live server wiring, so the runtime uses the real
+  Economy service instead of a temporary alternate implementation. No product
+  scope changed.
+- Resolved the reviewer's smaller gaps because they are explicit design/PRD
+  requirements. No review findings were silently deferred as polish.
+- The reviewer declined to judge native prompt visibility, rider collisions,
+  R6/R15 visuals, camera comfort, dash/Segway feel and live online services
+  without Studio. Those remain explicit acceptance gates below, not completed
+  requirements. The cost of proceeding without them would be shipping
+  unverified controls, physics and persistence; the goal stays unfinished.
 
 ## Requirement mapping
 

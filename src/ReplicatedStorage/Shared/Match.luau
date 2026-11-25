@@ -27,6 +27,10 @@ local function finish(m, result)
 	end
 	m.result, m.phase = result, "Payout"
 	for _, p in m.players do
+		drop(m, p)
+		p.fizz = 0
+		p.segway = false
+		p.stunUntil = 0
 		p.reward = p.banked
 			+ (if p.status == "Escaped" then Config.EscapeBonus else 0)
 			+ (if p.role == "Cop" and result == "Cops" then Config.CopWinReward else 0)
@@ -218,7 +222,12 @@ function Match.tick(m, now)
 			for id in car.riders do
 				local p = active(m, id, "Gran")
 				if p then
+					drop(m, p)
+					p.fizz = 0
 					p.status = "Escaped"
+					p.escapeCar = car.id
+					p.escapeSeat = p.seat
+					p.escapedAt = now
 					p.car = nil
 					p.seat = nil
 					count += 1
@@ -256,9 +265,26 @@ function Match.tick(m, now)
 		m.phase = "Escape"
 	end
 end
+function Match.rider(m, id, now)
+	local p = m.players[id]
+	if not p or not p.connected then
+		return nil
+	end
+	if p.status == "Escaped" and p.escapeCar and now < p.escapedAt + 3 then
+		return p.escapeCar, p.escapeSeat
+	end
+	if not m.result and p.status == "Active" and p.car then
+		return p.car, p.seat
+	end
+	return nil
+end
 function Match.snapshot(m)
 	local players, cars = {}, {}
 	for _, p in m.players do
+		local carried = 0
+		for _, id in p.bag do
+			carried += m.loot[id].value
+		end
 		table.insert(players, {
 			id = p.id,
 			name = p.name,
@@ -267,6 +293,7 @@ function Match.snapshot(m)
 			status = p.status,
 			connected = p.connected,
 			bulk = p.bulk,
+			carried = carried,
 			capacity = Rules.capacity(p.class, p.fizz),
 			fizz = p.fizz,
 			banked = p.banked,

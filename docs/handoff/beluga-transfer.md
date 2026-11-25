@@ -22,4 +22,11 @@ registration, adding it to the removed list to prevent rediscovery.
 Configuration backups live outside the repository in
 `C:/Users/james/.codex/beluga-transfer-backup-20261124-gtb`.
 
-The goal remains open until the game is implemented and verified.
+James approved the full design on 2026-11-25. Source implementation, tests and
+build tooling now live on `codex/full-game` in this checkout. The generated
+`build/GranThriftBlotto.rbxl` includes an editor-visible map and game scripts.
+See `../acceptance.md` for review/fix evidence and native checks still open.
+James said he will install Roblox Studio and sign in for the remaining checks.
+
+The goal remains open until native gameplay and required online behavior are
+verified. The original empty Beluga assignment is not active again.

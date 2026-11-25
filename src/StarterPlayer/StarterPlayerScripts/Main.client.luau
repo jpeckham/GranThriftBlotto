@@ -3,12 +3,15 @@ local UI = require(script.Parent.UI)
 local Effects = require(script.Parent.Effects)
 local remotes = game:GetService("ReplicatedStorage"):WaitForChild("ThriftRemotes")
 local action = remotes:WaitForChild("actionRemote")
+local effects
 local function send(kind, id)
+	if kind == "CCTV" and id == 0 and effects then
+		effects:reset()
+	end
 	action:FireServer({ kind = kind, id = id })
 end
 local ui = UI.new(send)
-local effects = Effects.new()
-local camera = 0
+effects = Effects.new()
 remotes:WaitForChild("snapshot").OnClientEvent:Connect(function(snapshot)
 	ui:render(snapshot)
 	effects:update(snapshot)
@@ -39,18 +42,15 @@ UserInputService.InputBegan:Connect(function(input, processed)
 	elseif key == Enum.KeyCode.R or key == Enum.KeyCode.ButtonL2 then
 		send("Wand")
 	elseif key == Enum.KeyCode.G or key == Enum.KeyCode.ButtonB then
-		send("Segway")
+		send(if ui.isCop then "Segway" else "LeaveCar")
 	elseif key == Enum.KeyCode.B then
 		send("LeaveCar")
-	elseif key == Enum.KeyCode.H then
+	elseif key == Enum.KeyCode.H or key == Enum.KeyCode.ButtonL3 then
 		send("Horn")
-	elseif key == Enum.KeyCode.C then
-		camera = camera % 4 + 1
-		send("CCTV", camera)
-	elseif key == Enum.KeyCode.X then
-		camera = 0
-		send("CCTV", 0)
-		effects:reset()
+	elseif key == Enum.KeyCode.C or key == Enum.KeyCode.ButtonL1 then
+		ui:cycleCamera()
+	elseif key == Enum.KeyCode.X or key == Enum.KeyCode.ButtonR1 then
+		ui:exitCamera()
 	end
 end)
 task.defer(function()

@@ -82,6 +82,7 @@ function Game:sound(part, name, speed)
 	Debris:AddItem(sound, 5)
 end
 function Game:alert(text, position)
+	Map.alert(self.world, position, text, workspace:GetServerTimeNow())
 	table.insert(self.alerts, { text = text, at = workspace:GetServerTimeNow(), position = position })
 	if #self.alerts > 8 then
 		table.remove(self.alerts, 1)
@@ -410,6 +411,7 @@ function Game:beginRound()
 	})
 end
 function Game:update(now)
+	Map.updateMonitors(self.world, now)
 	if self.phase == "Buick Intro" and now >= self.deadline then
 		self.phase = "Heist"
 		self.deadline = self.match.started + Config.Heist
@@ -420,6 +422,7 @@ function Game:update(now)
 			departed[i] = car.departed
 		end
 		Match.tick(self.match, now)
+		self:syncLoot()
 		self.phase = self.match.phase
 		for i, car in self.match.cars do
 			if car.departed and not departed[i] then
@@ -431,7 +434,9 @@ function Game:update(now)
 			for _, player in Players:GetPlayers() do
 				local p = self:state(player)
 				if p then
-					move(player, self.world.spawns.Lobby)
+					if not Match.rider(self.match, player.UserId, now) then
+						move(player, self.world.spawns.Lobby)
+					end
 					task.spawn(function()
 						for attempt = 1, 3 do
 							if self.economy:reward(player, self.roundId, p.reward) then
@@ -463,9 +468,18 @@ function Game:update(now)
 			local p = self:state(player)
 			local r = root(player)
 			if p and r then
-				if p.car and not self.match.result then
-					local car = self.world.cars[p.car]
-					local offset = if p.seat == "Hitch"
+				if p.role == "Gran" and p.status == "Active" and r.Position.Z < -8 then
+					if not p.motionPosition or (r.Position - p.motionPosition).Magnitude > 5 then
+						p.motionPosition = r.Position
+						if Rules.allow(p.gates, "motion", now, 8) then
+							self:alert("Motion detected", r.Position)
+						end
+					end
+				end
+				local riderCar, riderSeat = Match.rider(self.match, player.UserId, now)
+				if riderCar then
+					local car = self.world.cars[riderCar]
+					local offset = if riderSeat == "Hitch"
 						then Vector3.new((player.UserId % 3 - 1) * 2, 1.5, 11)
 						else Vector3.new((player.UserId % 3 - 1) * 2, 4, 0)
 					r.Anchored = true
@@ -494,8 +508,9 @@ function Game:update(now)
 				if p.fizz > 0 and p.status == "Active" and Rules.allow(p.gates, "hiccup", now, 7) then
 					self:sound(r, "Hiccup", 1.25)
 				end
-				if p.status == "Escaped" and self.phase ~= "Payout" and r.Position.Z < 55 then
+				if p.status == "Escaped" and not riderCar and not p.escapeFinished then
 					move(player, self.world.spawns.Lobby)
+					p.escapeFinished = true
 				end
 			end
 		end

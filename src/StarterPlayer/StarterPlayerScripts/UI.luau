@@ -97,6 +97,26 @@ function UI.new(send)
 	self.bank = label(stats, "Banked $0", UDim2.new(1, -24, 0, 20), UDim2.fromOffset(12, 130), 12)
 	self.alert = label(screen, "", UDim2.fromScale(0.55, 0.12), UDim2.fromScale(0.43, 0.14), 16, colors.pink)
 	self.cars = label(screen, "", UDim2.fromScale(0.55, 0.14), UDim2.fromScale(0.43, 0.26), 14)
+	self.cameraNext = button(
+		screen,
+		"CCTV • C / LB",
+		UDim2.new(0.25, 0, 0, 38),
+		UDim2.new(0.43, 0, 1, -222),
+		function()
+			self:cycleCamera()
+		end
+	)
+	self.cameraExit = button(
+		screen,
+		"EXIT CCTV • X / RB",
+		UDim2.new(0.27, 0, 0, 38),
+		UDim2.new(0.71, 0, 1, -222),
+		function()
+			self:exitCamera()
+		end
+	)
+	self.cameraNext.Visible = false
+	self.cameraExit.Visible = false
 	local bottom = round(new("Frame", screen, {
 		Size = UDim2.new(0.96, 0, 0, 96),
 		Position = UDim2.new(0.02, 0, 1, -104),
@@ -111,7 +131,7 @@ function UI.new(send)
 		send(if self.isCop then "Wand" else "LeaveCar")
 	end)
 	self.mount = button(bottom, "G / SEGWAY", UDim2.fromScale(0.22, 0.48), UDim2.fromScale(0.50, 0.08), function()
-		send(if self.isCop then "Segway" else "LeaveCar")
+		send(if self.isCop then "Segway" else "Horn")
 	end)
 	button(bottom, "MENU / M", UDim2.fromScale(0.24, 0.48), UDim2.fromScale(0.735, 0.08), function()
 		self.panel.Visible = not self.panel.Visible
@@ -275,6 +295,14 @@ function UI:notify(text)
 		end
 	end)
 end
+function UI:cycleCamera()
+	self.camera = self.camera % 4 + 1
+	self.send("CCTV", self.camera)
+end
+function UI:exitCamera()
+	self.camera = 0
+	self.send("CCTV", 0)
+end
 function UI:render(snapshot)
 	local oldPhase = self.last and self.last.phase
 	self.last = snapshot
@@ -286,6 +314,8 @@ function UI:render(snapshot)
 	end
 	local p = self.me
 	self.isCop = p and p.role == "Cop"
+	self.cameraNext.Visible = self.isCop == true and p.status == "Active"
+	self.cameraExit.Visible = self.cameraNext.Visible
 	local seconds = math.ceil(snapshot.remaining)
 	self.timer.Text = string.upper(snapshot.phase)
 		.. "\n"
@@ -300,14 +330,22 @@ function UI:render(snapshot)
 		then "FIZZ " .. math.floor(p.fizz) .. "%"
 		else (if snapshot.practice then "SOLO STUDIO PRACTICE" else "2–10 PLAYERS")
 	self.fizz.fill.Size = UDim2.fromScale(if p then p.fizz / 100 else 0, 1)
-	self.bank.Text = "Banked $" .. (if p then p.banked else 0) .. " • Wallet $" .. snapshot.profile.bucks
+	self.bank.Text = "Carried $"
+		.. (if p then p.carried or 0 else 0)
+		.. " • Banked $"
+		.. (if p then p.banked else 0)
+		.. " • Wallet $"
+		.. snapshot.profile.bucks
 	local cd = if p then math.max(0, math.ceil(p.abilityAt - snapshot.now)) else 0
 	self.primary.Text = if self.isCop
 		then "Q / TAG GRAN"
 		elseif p and p.class == "Hoarder" then "SILENT PICKUP"
 		else (if cd > 0 then "ABILITY " .. cd .. "s" else "Q / ABILITY")
-	self.secondary.Text = if self.isCop then "R / WAND" else "B / LEAVE CAR"
-	self.mount.Text = if self.isCop then "G / SEGWAY" else "B / UNBOARD"
+	local wandCooldown = if p then math.max(0, math.ceil(p.wandAt - snapshot.now)) else 0
+	self.secondary.Text = if self.isCop
+		then (if wandCooldown > 0 then "WAND " .. wandCooldown .. "s" else "R / WAND")
+		else "B / LEAVE CAR"
+	self.mount.Text = if self.isCop then "G / SEGWAY" else "H / BUICK HORN"
 	local lines = {}
 	for _, car in snapshot.cars do
 		table.insert(

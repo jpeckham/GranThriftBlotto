@@ -1,4 +1,4 @@
-local suites = { "rules", "match", "profile", "map" }
+local suites = { "rules", "match", "profile", "map", "economy", "ui", "effects" }
 local fs = require("@lune/fs")
 local total = 0
 for _, name in suites do

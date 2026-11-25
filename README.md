@@ -42,8 +42,8 @@ checks still needed. Do not treat a green rules suite as a live playtest.
 | Cop tag wand | R | Gamepad L2 / HUD |
 | Mount/dismount Segway | G | Gamepad B / HUD |
 | Leave a Buick | B | HUD |
-| Cycle CCTV / return to character | C / X | Security monitor prompt |
-| Buick horn (driver) | H | Keyboard |
+| Cycle CCTV / return to character | C / X | Gamepad LB / RB; HUD buttons |
+| Buick horn (driver) | H | Gamepad left-stick click / HUD |
 | Menu, classes, preferences, wardrobe, receipt | M | Gamepad Select / HUD |
 
 Grans choose Manager (complaint cone), Hoarder (40% more space and silent

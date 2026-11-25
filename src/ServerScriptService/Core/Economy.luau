@@ -178,9 +178,10 @@ function Economy:write(player, s, profile, release)
 		return true
 	end
 	local acquired = false
-	local ok = retry(function()
+	local ok, persisted = retry(function()
 		acquired = false
 		return self.store:UpdateAsync("player_" .. player.UserId, function(raw)
+			acquired = false
 			if type(raw) ~= "table" or type(raw.lease) ~= "table" or raw.lease.owner ~= self.token then
 				return nil
 			end
@@ -192,11 +193,11 @@ function Economy:write(player, s, profile, release)
 			return p
 		end)
 	end)
-	if ok and not acquired then
+	if ok and (not acquired or not persisted) then
 		s.writable = false
 		s.status = "Profile session expired — economy disabled"
 	end
-	return ok and acquired
+	return ok and acquired and persisted ~= nil
 end
 function Economy:save(player, release)
 	local s = self.sessions[player.UserId]
@@ -204,6 +205,10 @@ function Economy:save(player, release)
 		return false
 	end
 	return self:locked(s, function()
+		if release and not s.writable and not s.loading then
+			self.sessions[player.UserId] = nil
+			return true
+		end
 		local ok = self:write(player, s, s.profile, release)
 		if release and ok then
 			s.writable = false

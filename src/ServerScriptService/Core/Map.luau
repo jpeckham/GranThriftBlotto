@@ -63,8 +63,11 @@ end
 local function car(parent, index, origin)
 	local model = folder(parent, "Buick" .. index, "Model")
 	model:SetAttribute("InteractionGroup", true)
+	local colors = {}
 	local function piece(name, size, offset, color, shape)
-		return part(model, name, size, origin + offset, color, shape)
+		local p = part(model, name, size, origin + offset, color, shape)
+		colors[p] = p.Color
+		return p
 	end
 	local color = ({ palette.pink, Color3.fromRGB(126, 165, 133), Color3.fromRGB(183, 151, 92) })[index]
 	local body = piece("Chassis", Vector3.new(9, 2, 18), Vector3.new(0, 2, 0), color)
@@ -88,8 +91,9 @@ local function car(parent, index, origin)
 	local bumper = piece("Bumper", Vector3.new(8, 0.5, 0.5), Vector3.new(0, 1.7, 9.3), Color3.fromRGB(200, 200, 195))
 	local dash = piece("Departure", Vector3.new(0.3, 1, 2), Vector3.new(4.8, 3, 0), color)
 	sign(model, "BUICK " .. index .. "  •  BANK & ESCAPE", origin + Vector3.new(0, 8, 0), Vector3.new(14, 2, 0.2))
-	return {
+	local record = {
 		model = model,
+		colors = colors,
 		home = body.CFrame,
 		origin = origin,
 		body = body,
@@ -102,17 +106,31 @@ local function car(parent, index, origin)
 			Depart = prompt(dash, "Depart", "Start 7s departure", "Driver only", 1),
 		},
 	}
+	-- A seated rider is inside the car geometry; server validates driver and range.
+	record.prompts.Depart.RequiresLineOfSight = false
+	return record
 end
 function Map.build(workspace)
 	local root = folder(workspace, "ThriftyAcres", "Model")
-	local w =
-		{ root = root, loot = {}, cars = {}, prompts = {}, spawns = {}, cameras = {}, scanners = {}, puddles = {} }
+	local w = {
+		root = root,
+		loot = {},
+		cars = {},
+		prompts = {},
+		spawns = {},
+		cameras = {},
+		monitors = {},
+		scanners = {},
+		puddles = {},
+	}
 	local parking = folder(root, "Parking")
 	local floor = folder(root, "ThriftFloor")
 	local fitting = folder(root, "FittingRooms")
 	local security = folder(root, "Security")
 	local ground = part(parking, "Asphalt", Vector3.new(180, 1, 90), Vector3.new(0, -0.5, 40), palette.dark)
 	ground.Material = Enum.Material.Asphalt
+	part(parking, "SideWalkway", Vector3.new(20, 1, 110), Vector3.new(-85, -0.5, -50), palette.dark).Material =
+		Enum.Material.Asphalt
 	part(floor, "Tile", Vector3.new(150, 1, 105), Vector3.new(0, -0.5, -57.5), palette.cream).Material =
 		Enum.Material.Marble
 	part(fitting, "Carpet", Vector3.new(32, 0.15, 65), Vector3.new(-59, 0.08, -70), Color3.fromRGB(124, 82, 106)).Material =
@@ -197,12 +215,12 @@ function Map.build(workspace)
 		part(fitting, "RoomDivider", Vector3.new(18, 8, 0.5), Vector3.new(-64, 4, z), palette.wood)
 		part(fitting, "Curtain", Vector3.new(0.3, 7, 9), Vector3.new(-54, 3.5, z + 5), palette.pink).CanCollide = false
 	end
-	local chute = part(fitting, "DonationChute", Vector3.new(8, 3, 5), Vector3.new(-69, 1.5, -35), palette.teal)
-	w.prompts.Shortcut = prompt(chute, "Shortcut", "Slip through donation vent", "Fitting room shortcut", 0.5)
-	w.shortcutExit = CFrame.new(-68, 3, -91)
+	local chute = part(parking, "DonationChute", Vector3.new(8, 3, 5), Vector3.new(-84, 1.5, -35), palette.teal)
+	w.prompts.Return = prompt(chute, "Return", "Crawl into donations", "Shortcut into fitting rooms", 0.5)
+	w.shortcutExit = CFrame.new(-84, 4, -28)
 	local vent = part(fitting, "VentExit", Vector3.new(5, 0.4, 5), Vector3.new(-67, 0.2, -94), palette.dark)
-	w.prompts.Return = prompt(vent, "Return", "Crawl back to donations", "Vent shortcut", 0.5)
-	w.shortcutEntrance = CFrame.new(-68, 3, -28)
+	w.prompts.Shortcut = prompt(vent, "Shortcut", "Slip outside to donations", "Bypass exit scanners", 0.5)
+	w.shortcutEntrance = CFrame.new(-68, 3, -91)
 	-- Security room is open toward the main aisle; bench has no touch-trigger trap.
 	part(security, "OfficeWall", Vector3.new(30, 10, 0.6), Vector3.new(60, 5, -62), palette.teal)
 	local bench = part(security, "DetentionBench", Vector3.new(20, 1.5, 5), Vector3.new(60, 1.5, -96), palette.wood)
@@ -226,6 +244,14 @@ function Map.build(workspace)
 			palette.dark
 		)
 		prompt(screen, "CCTV", "Open CCTV tablet", "Aisle " .. i)
+		local display = sign(
+			security,
+			"AISLE " .. i .. "\nCLEAR",
+			screen.CFrame.Position + Vector3.new(0, 0, 0.2),
+			Vector3.new(5, 3, 0.1),
+			palette.dark
+		)
+		table.insert(w.monitors, { label = display.Lettering.Text, untilTime = 0, part = display })
 	end
 	for i = 1, 3 do
 		local origin = Vector3.new(-40 + (i - 1) * 40, 0, 27)
@@ -261,9 +287,32 @@ function Map.reset(w)
 		item.prompt.Enabled = true
 		item.part.CFrame = item.home
 	end
+	for _, scanner in w.scanners do
+		scanner:SetAttribute("DisabledUntil", 0)
+	end
+	for _, vehicle in w.cars do
+		for p, color in vehicle.colors do
+			p.Color = color
+		end
+	end
 	if game then
 		for _, vehicle in w.cars do
 			vehicle.model:PivotTo(vehicle.home)
+		end
+	end
+end
+function Map.alert(w, position, text, now)
+	local aisle = math.clamp(math.floor((-position.Z - 24) / 19 + 0.5) + 1, 1, 4)
+	local monitor = w.monitors[aisle]
+	monitor.label.Text = "AISLE " .. aisle .. "\n" .. text
+	monitor.part.Color = palette.pink
+	monitor.untilTime = now + 8
+end
+function Map.updateMonitors(w, now)
+	for i, monitor in w.monitors do
+		if now >= monitor.untilTime then
+			monitor.label.Text = "AISLE " .. i .. "\nCLEAR"
+			monitor.part.Color = palette.dark
 		end
 	end
 end
