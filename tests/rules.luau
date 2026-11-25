@@ -1,5 +1,14 @@
 local Rules = require("../src/ReplicatedStorage/Shared/Rules")
 return {
+    ["Action envelopes reject unknown actions and malformed IDs"] = function()
+        assert(Rules.request({kind="Tag"}))
+        assert(Rules.request({kind="Class",id="Manager"}))
+        assert(not Rules.request({kind="GiveMoney",amount=500}))
+        assert(not Rules.request({kind="Class",id={}}))
+        assert(not Rules.request({kind="CCTV",id=math.huge}))
+        assert(not Rules.request("Tag"))
+        assert(not Rules.request({kind="Tag",amount=500}))
+    end,
     ["Hoarder holds 40 percent more"] = function()
         assert(Rules.capacity("Hoarder", 0) == 14)
         assert(Rules.capacity("Manager", 0) == 10)

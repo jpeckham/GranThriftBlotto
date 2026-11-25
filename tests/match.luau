@@ -4,6 +4,15 @@ local function game()
         {a={kind="Painting",value=300,bulk=4}, b={kind="Shoes",value=250,bulk=3}})
 end
 return {
+    ["Only active Grans can drink or activate class abilities"] = function()
+        local m=game(); assert(Match.drink(m,1)); assert(m.players[1].fizz==100)
+        assert(not Match.drink(m,3)); assert(Match.ability(m,1,0)); assert(not Match.ability(m,1,1))
+        assert(Match.ability(m,1,22)); Match.capture(m,1); assert(not Match.ability(m,1,50)); assert(not Match.drink(m,1))
+    end,
+    ["Manager stun prevents cop attacks until exact expiry"] = function()
+        local m=game(); m.players[3].stunUntil=3
+        assert(not Match.tag(m,3,1,2.99)); assert(Match.tag(m,3,1,3))
+    end,
     ["Atomic pickups cannot be claimed twice"] = function()
         local m=game(); assert(Match.pickup(m,1,"a")); assert(not Match.pickup(m,2,"a"))
         assert(m.players[1].bulk==4 and m.players[2].bulk==0)

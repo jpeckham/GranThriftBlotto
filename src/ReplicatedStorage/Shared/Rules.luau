@@ -1,4 +1,13 @@
 local Rules = {}
+local actions={Tag="none",Ability="none",Wand="none",Segway="none",LeaveCar="none",Ready="none",CCTV="number",Class="string",Preference="string",Buy="string",Equip="string",Pass="string"}
+function Rules.request(payload)
+    if type(payload)~="table" or type(payload.kind)~="string" then return false end
+    local expected=actions[payload.kind]; if not expected then return false end
+    for key in payload do if key~="kind" and key~="id" then return false end end
+    if expected=="none" then return payload.id==nil end
+    if expected=="number" then return Rules.finite(payload.id) and payload.id%1==0 and payload.id>=0 and payload.id<=4 end
+    return type(payload.id)=="string" and #payload.id<=40
+end
 function Rules.finite(n)
     return type(n) == "number" and n == n and math.abs(n) < math.huge
 end

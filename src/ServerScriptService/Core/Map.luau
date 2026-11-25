@@ -28,6 +28,7 @@ local function prompt(p,name,action,object,hold)
 end
 local function car(parent,index,origin)
     local model=folder(parent,"Buick"..index,"Model")
+    model:SetAttribute("InteractionGroup",true)
     local function piece(name,size,offset,color,shape)
         return part(model,name,size,origin+offset,color,shape)
     end
@@ -70,8 +71,10 @@ function Map.build(workspace)
     sign(floor,"ORTHOPEDIC SHOE WALL",Vector3.new(35,10,-108),Vector3.new(36,3,0.3))
     sign(fitting,"FITTING ROOMS / DONATIONS",Vector3.new(-57,10,-108),Vector3.new(34,3,0.3),palette.pink)
     sign(security,"SECURITY / DETENTION",Vector3.new(53,10,-60),Vector3.new(33,3,0.3),palette.dark)
-    for _,x in {-6,6} do
-        local scanner=part(floor,"ExitScanner",Vector3.new(1,7,2),Vector3.new(x,3.5,-5),Color3.fromRGB(152,185,187))
+    for _,x in {-4.5,4.5} do
+        part(floor,"ScannerFrame",Vector3.new(0.5,7,2),Vector3.new(x*2,3.5,-5),Color3.fromRGB(152,185,187))
+        local scanner=part(floor,"ExitScanner",Vector3.new(9,7,2),Vector3.new(x,3.5,-5),Color3.fromRGB(152,185,187))
+        scanner.CanCollide=false; scanner.Transparency=1
         table.insert(w.scanners,scanner)
     end
     for row=1,4 do
