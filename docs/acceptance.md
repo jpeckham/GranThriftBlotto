@@ -5,14 +5,14 @@ This is a game implementation, not a published Roblox experience.
 
 ## Automated evidence
 
-- 46 Lune tests execute production rules, match actions, profiles, map generation,
+- 47 Lune tests execute production rules, match actions, profiles, map generation,
   real Economy service logic, real UI construction/actions and camera cleanup.
   Service-boundary tests replace external Roblox services and events; they
   are not a substitute for native engine acceptance.
 - Every Luau source compiles through `@lune/luau`.
 - Rojo builds the DataModel. Lune bakes the map and deserializes the resulting
   binary place to confirm it contains map and server scripts.
-- Final source run: 46/46 tests; 13 source files compile; Selene reports
+- Latest source run: 47/47 tests; 13 source files compile; Selene reports
   0 errors, 0 warnings and 0 parse errors; Rojo and binary map packaging pass.
   Source tests do not execute Roblox engine physics or live online services.
 
@@ -37,6 +37,29 @@ Additional checks protect car color/scanner reset, animated escape-rider
 retention, touch horn/unboarding and camera cleanup after detention,
 character replacement and round transition. Departure prompts remain usable
 inside car geometry while the server checks range and chosen driver.
+
+## Native Studio startup evidence — 2026-11-25
+
+Studio 0.748.0.7481526 is now installed and signed in. Native Play testing
+exposed two issues that standalone service doubles did not reproduce:
+
+- Opening DataStoreService before checking `IsStudio()` prevented an
+  unpublished local place from starting. Studio startup now avoids opening a
+  DataStore entirely and uses the intended temporary wallet. A regression
+  test reproducing the native error failed before the fix and now passes.
+- The client main script could execute before its sibling UI module had
+  replicated. Client module dependencies now use `WaitForChild`.
+
+After these fixes the native smoke runner returned `passed: true`, one player,
+phase `Heist`, and no captured game-script errors. It verified native Studio
+wallet initialization, client HUD initialization, costume construction and
+solo round startup. The same packaged place was opened and played in the
+visible Studio window; HUD, intro and Heist were visually observed without
+game-script errors. Machine-readable evidence, including the tested place
+hash, is in `verification/native-smoke-2026-11-25.json`.
+
+This proves startup only. The multiplayer interaction scenario and the rest
+of the native acceptance procedure remain in progress.
 
 ## Execution decisions
 
@@ -102,9 +125,10 @@ inside car geometry while the server checks range and chosen driver.
    actual prices, cosmetic activation, persistence after rejoin, rejected
    writes after a failed load, and receipt retry after simulated store failure.
 
-## Environment limitation
+## Remaining environment gates
 
-Roblox Studio was not found in installed locations or running processes, and
-no Roblox runtime connector is available. Automatic approval review rejected
-the download/launch installation command with “blocked by policy”. No native
-playtest or live Marketplace/DataStore verification has been claimed.
+James installed Studio and signed in after the earlier installer command
+was blocked by automatic approval review. Native local testing is now
+available; live Marketplace and production DataStore checks still require
+an owned published test experience and owner-specific IDs. Those external
+configuration and publishing steps have not been performed.

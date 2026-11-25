@@ -74,7 +74,12 @@ local function harness()
 		Players = { LocalPlayer = player },
 		ReplicatedStorage = {
 			WaitForChild = function()
-				return { Catalog = "Catalog" }
+				return {
+					WaitForChild = function(_, name)
+						assert(name == "Catalog")
+						return "Catalog"
+					end,
+				}
 			end,
 		},
 		HttpService = {

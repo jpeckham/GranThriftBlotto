@@ -28,10 +28,11 @@ For live source sync, run `rojo serve` (or `.tools/rojo.exe serve`) and connect
 the Rojo Studio plugin. The `.rbxlx` build also contains the source scripts;
 the map in that file is generated when Play begins.
 
-Studio is not installed on the build workstation. Source checks and place
-serialization have run; actual engine multiplayer and UI verification remain
-open. See [docs/acceptance.md](docs/acceptance.md) for the evidence and exact
-checks still needed. Do not treat a green rules suite as a live playtest.
+Studio is installed on the build workstation. Native solo startup now passes:
+the client HUD and costume initialize and the round reaches Heist. Multiplayer
+interaction and wider UI verification remain in progress. See
+[docs/acceptance.md](docs/acceptance.md) for the evidence and exact checks still
+needed. Do not treat a green rules suite as a complete live playtest.
 
 ## Controls
 

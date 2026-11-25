@@ -28,7 +28,7 @@ function Economy.new()
 		sessions = {},
 		prices = {},
 		closing = false,
-		store = DataStoreService:GetDataStore(Config.DataStore),
+		store = if RunService:IsStudio() then nil else DataStoreService:GetDataStore(Config.DataStore),
 		token = game.JobId .. HttpService:GenerateGUID(false),
 	}, Economy)
 	task.spawn(function()

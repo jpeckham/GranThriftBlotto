@@ -16,7 +16,7 @@ local function copy(value)
 	end
 	return result
 end
-local function fixture(initial)
+local function fixture(initial, studio)
 	local store = { record = initial, fail = false }
 	function store:UpdateAsync(_key, transform)
 		if self.fail then
@@ -50,13 +50,16 @@ local function fixture(initial)
 		Players = players,
 		DataStoreService = {
 			GetDataStore = function()
+				if studio then
+					error("You must publish this place to the web to access DataStore.")
+				end
 				return store
 			end,
 		},
 		MarketplaceService = marketplace,
 		RunService = {
 			IsStudio = function()
-				return false
+				return studio == true
 			end,
 		},
 		HttpService = {
@@ -96,6 +99,14 @@ local function fixture(initial)
 	return store, server, player, marketplace
 end
 return {
+	["An unpublished Studio place starts without opening a DataStore"] = function()
+		local _, server, player = fixture(Profile.new(), true)
+		local economy = server()
+		economy:load(player)
+		assert(economy:snapshot(player).ready and economy:snapshot(player).bucks == 0)
+		assert(economy:reward(player, "studio-round", 50))
+		assert(economy:snapshot(player).bucks == 50)
+	end,
 	["A failed load recovers when the player rejoins the same server"] = function()
 		local raw = Profile.new()
 		raw.bucks = 500

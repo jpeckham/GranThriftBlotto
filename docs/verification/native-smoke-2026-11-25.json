@@ -1,0 +1,23 @@
+{
+  "date": "2026-11-25",
+  "studioVersion": "0.748.0.7481526",
+  "suite": "native-smoke",
+  "placeSha256": "006641E00B9148F2073404BCAFDD1D4CC60B5A13710E7FB675F4540BE0F5B9B9",
+  "result": {
+    "phase": "Heist",
+    "players": 1,
+    "passed": true,
+    "errors": []
+  },
+  "coverage": [
+    "unpublished local place startup",
+    "Studio wallet initialization",
+    "client HUD initialized",
+    "character costume initialized",
+    "solo intermission and Buick intro to Heist"
+  ],
+  "limitations": [
+    "not a multiplayer gameplay acceptance result",
+    "no live purchases or published DataStore tested"
+  ]
+}

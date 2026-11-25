@@ -1,6 +1,6 @@
 local Players = game:GetService("Players")
 local Shared = game:GetService("ReplicatedStorage"):WaitForChild("Shared")
-local Catalog = require(Shared.Catalog)
+local Catalog = require(Shared:WaitForChild("Catalog"))
 local UI = {}
 UI.__index = UI
 local colors = {

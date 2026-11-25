@@ -1,6 +1,6 @@
 local UserInputService = game:GetService("UserInputService")
-local UI = require(script.Parent.UI)
-local Effects = require(script.Parent.Effects)
+local UI = require(script.Parent:WaitForChild("UI"))
+local Effects = require(script.Parent:WaitForChild("Effects"))
 local remotes = game:GetService("ReplicatedStorage"):WaitForChild("ThriftRemotes")
 local action = remotes:WaitForChild("actionRemote")
 local effects
